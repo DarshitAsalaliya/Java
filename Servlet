@@ -1,0 +1,67 @@
+package servlet;
+
+import CustomerClient.CustomerInterface;
+import Entity.CustomerMaster;
+import bean.CustomerBean;
+import com.mycompany.internalproject.service.ExampleService;
+import java.io.IOException;
+import java.io.PrintWriter;
+import java.util.ArrayList;
+import java.util.Collection;
+import javax.inject.Inject;
+import javax.servlet.ServletException;
+import javax.servlet.http.HttpServlet;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import javax.ws.rs.core.GenericType;
+import javax.ws.rs.core.Response;
+import org.eclipse.microprofile.rest.client.inject.RestClient;
+
+public class CustomerServlet extends HttpServlet {
+
+    @Inject ExampleService es;
+
+    protected void processRequest(HttpServletRequest request, HttpServletResponse response)
+            throws ServletException, IOException {
+        response.setContentType("text/html;charset=UTF-8");
+
+        try (PrintWriter out = response.getWriter()) {
+            /* TODO output your page here. You may use following sample code. */
+            out.println("<!DOCTYPE html>");
+            out.println("<html>");
+            out.println("<head>");
+            out.println("<title>Servlet CustomerServlet</title>");
+            out.println("</head>");
+            out.println("<body>");
+
+            // loop
+
+            for (CustomerMaster cobj : es.getCustomers()) {
+                out.println(cobj.getName());
+            }
+
+            out.println("</body>");
+            out.println("</html>");
+        }
+    }
+
+    @Override
+    protected void doGet(HttpServletRequest request, HttpServletResponse response)
+            throws ServletException, IOException {
+        processRequest(request, response);
+    }
+
+
+    @Override
+    protected void doPost(HttpServletRequest request, HttpServletResponse response)
+            throws ServletException, IOException {
+        processRequest(request, response);
+    }
+
+
+    @Override
+    public String getServletInfo() {
+        return "Short description";
+    }// </editor-fold>
+
+}
