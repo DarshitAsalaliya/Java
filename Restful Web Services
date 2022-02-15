@@ -1,0 +1,58 @@
+package com.mycompany.internalproject.service;
+
+import Entity.CustomerMaster;
+import java.util.Collection;
+import java.util.Date;
+import javax.persistence.EntityManager;
+import javax.persistence.Persistence;
+import javax.persistence.PersistenceContext;
+import javax.ws.rs.Consumes;
+import javax.ws.rs.DELETE;
+import javax.ws.rs.GET;
+import javax.ws.rs.POST;
+import javax.ws.rs.PUT;
+import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
+import javax.ws.rs.Produces;
+import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
+
+@Path("/customer")
+public class ExampleService {
+
+    EntityManager em = Persistence.createEntityManagerFactory("CustomerPU").createEntityManager();
+
+    @GET
+    @Produces(MediaType.APPLICATION_JSON)
+    public Collection<CustomerMaster> getCustomers() {
+        return em.createNamedQuery("CustomerMaster.findAll").getResultList();
+    }
+
+    @POST
+    @Consumes(MediaType.APPLICATION_JSON)
+    public void insertcustomer(CustomerMaster cst) {
+        em.getTransaction().begin();
+        em.persist(cst);
+        em.getTransaction().commit();
+    }
+
+    @PUT
+    @Path("{id}")
+    @Consumes(MediaType.APPLICATION_JSON)
+    public void updatecustomer(@PathParam("id") int id, CustomerMaster cst) {
+        em.getTransaction().begin();
+        CustomerMaster obj = em.find(CustomerMaster.class, id);
+        obj.setName(cst.getName());
+        em.merge(obj);
+        em.getTransaction().commit();
+    }
+
+    @DELETE
+    @Path("{id}")
+    @Consumes(MediaType.APPLICATION_JSON)
+    public void delcustomer(@PathParam("id") int id) {
+        em.getTransaction().begin();
+        em.remove(em.find(CustomerMaster.class, id));
+        em.getTransaction().commit();
+    }
+}
