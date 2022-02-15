@@ -1,0 +1,146 @@
+package beans;
+
+import client.EKhataClient;
+import entity.Tblstate;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Map;
+import javax.inject.Named;
+import javax.enterprise.context.RequestScoped;
+import javax.faces.application.FacesMessage;
+import javax.faces.component.UIComponent;
+import javax.faces.context.FacesContext;
+import javax.faces.validator.ValidatorException;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import javax.ws.rs.core.GenericType;
+import javax.ws.rs.core.Response;
+
+@Named(value = "stateBean")
+@RequestScoped
+public class StateBean {
+
+    String StateName;
+    Integer StateId;
+
+    EKhataClient client;
+    Response res;
+
+    private Map<String, Object> sessionMap = FacesContext.getCurrentInstance().getExternalContext().getSessionMap();
+
+    Collection<Tblstate> states;
+    GenericType<Collection<Tblstate>> gstates;
+
+    HttpServletRequest request = (HttpServletRequest) FacesContext.getCurrentInstance().getExternalContext().getRequest();
+    HttpServletResponse response = (HttpServletResponse) FacesContext.getCurrentInstance().getExternalContext().getResponse();
+
+    public EKhataClient getClient() {
+        return client;
+    }
+
+    public void setClient(EKhataClient client) {
+        this.client = client;
+    }
+
+    public String getStateName() {
+        return StateName;
+    }
+
+    public void setStateName(String StateName) {
+        this.StateName = StateName;
+    }
+
+    public Integer getStateId() {
+        return StateId;
+    }
+
+    public void setStateId(Integer StateId) {
+        this.StateId = StateId;
+    }
+
+    public Collection<Tblstate> getStates() {
+
+        System.out.println("States =======");
+
+        res = client.getAllState_JSON(Response.class);
+        states = res.readEntity(gstates);
+
+        return states;
+    }
+
+    public void setStates(Collection<Tblstate> states) {
+        this.states = states;
+    }
+
+    public GenericType<Collection<Tblstate>> getGstates() {
+        return gstates;
+    }
+
+    public void setGstates(GenericType<Collection<Tblstate>> gstates) {
+        this.gstates = gstates;
+    }
+
+    /**
+     * Creates a new instance of StateBean
+     */
+    public void checkStateName(FacesContext arg0, UIComponent arg1, Object arg2)
+            throws ValidatorException {
+        String NAME_PATTERN
+                = "^[A-Za-z ]{3,}$";
+
+        String value = arg2.toString().trim();
+        if (!value.matches(NAME_PATTERN)) {
+
+            FacesMessage msg
+                    = new FacesMessage("Invalid State Name.");
+            msg.setSeverity(FacesMessage.SEVERITY_ERROR);
+            throw new ValidatorException(msg);
+
+        }
+    }
+
+    public StateBean() {
+        String token = "";
+        token = request.getSession().getAttribute("token").toString();
+        System.out.println("Token = " + token);
+
+        client = new EKhataClient(token);
+
+        states = new ArrayList<Tblstate>();
+        gstates = new GenericType<Collection<Tblstate>>() {
+        };
+    }
+
+    public String EditState(int stateId) {
+        res = client.getStateById_JSON(Response.class, String.valueOf(stateId));
+        states = res.readEntity(gstates);
+
+        StateBean sbobj = new StateBean();
+
+        for (Tblstate sobj : states) {
+            sbobj.setStateId(sobj.getStateId());
+            sbobj.setStateName(sobj.getStateName());
+        }
+
+        sessionMap.put("editState", sbobj);
+
+        return "EditState.xhtml?faces-redirect=true";
+
+    }
+
+    public String FinalEditState(StateBean s) {
+        client.updateState(s.getStateId().toString(), s.getStateName(), request.getSession().getAttribute("logged-userid").toString());
+        return "State.xhtml?faces-redirect=true";
+    }
+
+    public String DeleteState(int stateId) {
+        client.deleteState(String.valueOf(stateId), "D", request.getSession().getAttribute("logged-userid").toString());
+        //return "State.xhtml";
+        return "State.xhtml?faces-redirect=true";
+    }
+
+    public String AddState() {
+        client.insertState(StateName, request.getSession().getAttribute("logged-userid").toString());
+        return "State.xhtml?faces-redirect=true";
+    }
+}
