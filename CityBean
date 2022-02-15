@@ -1,0 +1,206 @@
+package beans;
+
+import client.EKhataClient;
+import entity.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Map;
+import javax.inject.Named;
+import javax.enterprise.context.RequestScoped;
+import javax.faces.application.FacesMessage;
+import javax.faces.component.UIComponent;
+import javax.faces.context.FacesContext;
+import javax.faces.validator.ValidatorException;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import javax.ws.rs.core.GenericType;
+import javax.ws.rs.core.Response;
+
+@Named(value = "cityBean")
+@RequestScoped
+public class CityBean {
+
+    String CityName;
+    Integer StateId, CityId;
+
+    EKhataClient client;
+    Response res;
+
+    private Map<String, Object> sessionMap = FacesContext.getCurrentInstance().getExternalContext().getSessionMap();
+
+    Collection<Tblstate> states;
+    GenericType<Collection<Tblstate>> gstates;
+
+    Collection<Tblcity> cities;
+    GenericType<Collection<Tblcity>> gcities;
+
+    HttpServletRequest request = (HttpServletRequest) FacesContext.getCurrentInstance().getExternalContext().getRequest();
+    HttpServletResponse response = (HttpServletResponse) FacesContext.getCurrentInstance().getExternalContext().getResponse();
+
+    public String getCityName() {
+        return CityName;
+    }
+
+    public void setCityName(String CityName) {
+        this.CityName = CityName;
+    }
+
+    public Integer getStateId() {
+        return StateId;
+    }
+
+    public void setStateId(Integer StateId) {
+        this.StateId = StateId;
+    }
+
+    public Integer getCityId() {
+        return CityId;
+    }
+
+    public void setCityId(Integer CityId) {
+        this.CityId = CityId;
+    }
+
+    public EKhataClient getClient() {
+        return client;
+    }
+
+    public void setClient(EKhataClient client) {
+        this.client = client;
+    }
+
+    public Collection<Tblstate> getStates() {
+        System.out.println("States =======");
+
+        res = client.getAllState_JSON(Response.class);
+        states = res.readEntity(gstates);
+
+        return states;
+    }
+
+    public void setStates(Collection<Tblstate> states) {
+        this.states = states;
+    }
+
+    public GenericType<Collection<Tblstate>> getGstates() {
+        return gstates;
+    }
+
+    public void setGstates(GenericType<Collection<Tblstate>> gstates) {
+        this.gstates = gstates;
+    }
+
+    public Collection<Tblcity> getCities() {
+        System.out.println("Cities =======");
+
+        res = client.getAllCity_JSON(Response.class);
+        cities = res.readEntity(gcities);
+
+        return cities;
+    }
+
+    public void setCities(Collection<Tblcity> cities) {
+        this.cities = cities;
+    }
+
+    public GenericType<Collection<Tblcity>> getGcities() {
+        return gcities;
+    }
+
+    public void setGcities(GenericType<Collection<Tblcity>> gcities) {
+        this.gcities = gcities;
+    }
+
+    public void checkCityName(FacesContext arg0, UIComponent arg1, Object arg2)
+            throws ValidatorException {
+        String NAME_PATTERN
+                = "^[A-Za-z ]{3,}$";
+
+        String value = arg2.toString().trim();
+        if (!value.matches(NAME_PATTERN)) {
+
+            FacesMessage msg
+                    = new FacesMessage("Invalid City Name.");
+            msg.setSeverity(FacesMessage.SEVERITY_ERROR);
+            throw new ValidatorException(msg);
+        }
+    }
+
+    public void checkState(FacesContext arg0, UIComponent arg1, Object arg2)
+            throws ValidatorException {
+
+        String value = arg2.toString();
+        if (value.equals("0")) {
+
+            FacesMessage msg
+                    = new FacesMessage("Select State.");
+            msg.setSeverity(FacesMessage.SEVERITY_ERROR);
+            throw new ValidatorException(msg);
+
+        }
+    }
+
+    /**
+     * Creates a new instance of CityBean
+     */
+    public CityBean() {
+
+        String token = "";
+        token = request.getSession().getAttribute("token").toString();
+        System.out.println("Token = " + token);
+
+        client = new EKhataClient(token);
+
+        states = new ArrayList<Tblstate>();
+        gstates = new GenericType<Collection<Tblstate>>() {
+        };
+
+        cities = new ArrayList<Tblcity>();
+        gcities = new GenericType<Collection<Tblcity>>() {
+        };
+    }
+
+    public String EditCity(int cityId) {
+        System.out.println("cityID=============="+cityId);
+        res = client.getCityById_JSON(Response.class, String.valueOf(cityId));
+        cities = res.readEntity(gcities);
+        CityBean cbobj = new CityBean();
+
+        for (Tblcity cobj : cities) {        
+            cbobj.setCityId(cobj.getCityId());
+            cbobj.setCityName(cobj.getCityName());
+            cbobj.setStateId(Integer.parseInt(cobj.getStateId().toString().split("=")[1].split(" ")[0]));
+        }
+
+        sessionMap.put("editCity", cbobj);
+
+        return "EditCity.xhtml?faces-redirect=true";
+    }
+
+    public String FinalEditCity(CityBean c) {
+        client.updateCity(c.getCityId().toString(), c.getStateId().toString(), c.getCityName(), request.getSession().getAttribute("logged-userid").toString());
+        return "City.xhtml?faces-redirect=true";
+    }
+
+    public String DeleteCity(int cityId) {
+        client.deleteCity(String.valueOf(cityId), "D", request.getSession().getAttribute("logged-userid").toString());
+        //return "City.xhtml";
+        return "City.xhtml?faces-redirect=true";
+    }
+
+    public String AddCity() {
+        client.insertCity(CityName, StateId.toString(), request.getSession().getAttribute("logged-userid").toString());
+        return "City.xhtml?faces-redirect=true";
+    }
+
+    public String GetStateNameByStateId(String stateid) {
+
+        res = client.getStateById_JSON(Response.class, stateid.split("=")[1].split(" ")[0]);
+        states = res.readEntity(gstates);
+        String sname = null;
+        for (Tblstate sobj : states) {
+            sname = sobj.getStateName();
+        }    
+        return sname.toString();
+    }
+}
