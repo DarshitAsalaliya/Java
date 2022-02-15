@@ -1,0 +1,120 @@
+package bean;
+
+import CustomerClient.CustomerInterface;
+import Entity.CustomerMaster;
+import java.util.Collection;
+import javax.inject.Named;
+import javax.enterprise.context.RequestScoped;
+import javax.inject.Inject;
+import org.eclipse.microprofile.rest.client.inject.RestClient;
+
+@Named(value = "customerBean")
+@RequestScoped
+public class CustomerBean {
+
+    @Inject
+    @RestClient
+    CustomerInterface rc;
+
+    Collection<CustomerMaster> customers;
+    int cid;
+    String name;
+    String lname;
+    String email;
+    int rating;
+    String address;
+    String phone;
+
+    public CustomerBean() {
+    }
+
+    // get data
+    public String findusr(int id, CustomerMaster cust) {
+        cid = id;
+        name = cust.getName();
+        email = cust.getEmail();
+        rating = cust.getRating();
+        address = cust.getAddress();
+        phone = cust.getPhone();
+        return "find.jsf";
+    }
+
+    public void addcust() {
+        CustomerMaster cst = new CustomerMaster();
+        cst.setName(name);
+        cst.setEmail(email);
+        cst.setRating(rating);
+        cst.setAddress(address);
+        cst.setPhone(phone);
+        rc.insertcustomer(cst);
+    }
+
+    public void deleteuser(int id) {
+        rc.delcustomer(id);
+    }
+
+    public Collection<CustomerMaster> getCustomers() {
+        return customers;
+    }
+
+    public void setCustomers(Collection<CustomerMaster> customers) {
+        this.customers = customers;
+    }
+
+    public int getCid() {
+        return cid;
+    }
+
+    public void setCid(int cid) {
+        this.cid = cid;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public String getLname() {
+        return lname;
+    }
+
+    public void setLname(String lname) {
+        this.lname = lname;
+    }
+
+    public String getEmail() {
+        return email;
+    }
+
+    public void setEmail(String email) {
+        this.email = email;
+    }
+
+    public int getRating() {
+        return rating;
+    }
+
+    public void setRating(int rating) {
+        this.rating = rating;
+    }
+
+    public String getAddress() {
+        return address;
+    }
+
+    public void setAddress(String address) {
+        this.address = address;
+    }
+
+    public String getPhone() {
+        return phone;
+    }
+
+    public void setPhone(String phone) {
+        this.phone = phone;
+    }
+
+}
